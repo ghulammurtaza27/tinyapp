@@ -12,16 +12,18 @@ const urlDatabase = {
 
 app.set('view engine', 'ejs');
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+
+app.get("/", (req, res) => {
+  res.redirect('/urls');
+});
+
+
 app.get("/urls.json", (req, res) => {
-  res.render(urlDatabase);
+  res.send(urlDatabase);
 });
 // /urls/:shortURL
 app.get("/urls", (req, res) => {
@@ -38,23 +40,27 @@ app.get("/urls/new", (req, res) => {
 
 function generateRandomString() {
   let r = Math.random().toString(36).substring(7);
-  console.log("random", r);
+  return r;
 }
 
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  const shortUrl = generateRandomString();
+  urlDatabase[shortUrl] = req.body.longURL;
+  res.redirect(`/urls/${shortUrl}`);        // Respond with 'Ok' (we will replace this)
+});
+app.get("/hello", (req, res) => {
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
-
-
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
-generateRandomString()
+
+
