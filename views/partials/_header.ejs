@@ -22,10 +22,7 @@
      
     
     <% if (!user)  {%>
-      <form method="POST", action="/login" class="form-inline">
-        <input type="text" class="form-control" placeholder="Username" name="username" />
-        <button type="submit" class="btn btn-primary">Sign In</button>
-      </form>
+      <a href="/login"><button type="submit" class="btn btn-primary">Sign In</button></a>
       <a href="/register"><button type="submit" class="btn btn-primary">Register Here</button></a>
       <% }%>
   </nav>

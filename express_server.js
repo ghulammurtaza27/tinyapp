@@ -67,10 +67,20 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log(req.body.username);  // Log the POST request body to the console
-  const username = req.body.username;
-  res.cookie('username', username );
-  res.redirect(`/urls`);
+  console.log(req.body.email);  // Log the POST request body to the console
+  const { email, password } = req.body;
+
+  for (let user in users) {
+    console.log(user);
+    if (users[user].email === email) {
+        console.log(users[user].email);
+       if (users[user].password === password) {
+        res.cookie('user_id', user);
+        return res.redirect('/login');
+      }
+    }
+  }
+  return res.status(403).send("Log In info is invalid.");
 });
 
 app.get("/login", (req, res) => {
