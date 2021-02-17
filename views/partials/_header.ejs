@@ -11,9 +11,9 @@
       </div>
     </div>
    
-    <% if (username)  {%>
+    <% if (user)  {%>
     
-      <span>Logged In As: <%= username %>!</span>
+      <span class="navbar-text nav-link">Logged In As: <%= user.email %>!</span>
       <form method="POST", action="/logout" class="form-inline">
         <button type="submit" class="btn btn-primary">Logout</button>
       </form>
@@ -21,12 +21,12 @@
     <% }%>
      
     
-    <% if (!username)  {%>
+    <% if (!user)  {%>
       <form method="POST", action="/login" class="form-inline">
         <input type="text" class="form-control" placeholder="Username" name="username" />
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary">Sign In</button>
       </form>
+      <a href="/register"><button type="submit" class="btn btn-primary">Register Here</button></a>
       <% }%>
-    
   </nav>
 </header>

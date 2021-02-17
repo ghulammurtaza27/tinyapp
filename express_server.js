@@ -12,6 +12,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+};
+
 app.set('view engine', 'ejs');
 
 app.listen(PORT, () => {
@@ -22,15 +35,21 @@ app.listen(PORT, () => {
 
 
 
+
+
 // /urls/:shortURL
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const user = users[req.cookies["user_id"]];
+  console.log(user);
+  const templateVars = { urls: urlDatabase, user, userID: req.cookies["user_id"], };
   res.render("urls_index", templateVars);
 });
 
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { user, userID: req.cookies["user_id"], };
+  res.render("urls_new", templateVars);
 });
 
 
@@ -54,22 +73,60 @@ app.post("/login", (req, res) => {
   res.redirect(`/urls`);
 });
 
+app.get("/login", (req, res) => {
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user };
+  console.log("loginpage hit");
+  res.render("login", templateVars);
+  
+});
+
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
+  console.log("logout attempted")
   res.redirect("/urls");
 });
 
+app.get("/register", (req, res) => {
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user };
+  console.log("register page hit");
+  res.render("register", templateVars);
+  
+});
+
+// If the e-mail or password are empty strings, send back a response with the 400 status code.
+// // If someone tries to register with an email that is already in the users object, send back a response with the 400 status code. Checking for an email in the users object is something we'll need to do in other routes as well. Consider creating an email lookup helper function to keep your code DRY
+
+app.post("/register", (req, res) =>  {
+  const { email, password } = req.body;
+  if (email === "") {
+    return res.status(400).send("Email cannot be empty");
+  }
+  for (let user in users) {
+    if (users[user].email === email) {
+       return res.status(400).send("This email already exists");
+    }
+  }
+  const userId = generateRandomString();
+  const userObj = {
+    userId,
+    email,
+    password, 
+  }
+  users[userId] = userObj;
+  res.cookie('user_id', userId);
+  console.log(users);
+  res.redirect("/urls");
+});
 
 
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls`);
-  //  <form action="/urls/<%= url %>" method="get">
-  //    <button class="btn btn-primary" type="submit">Edit</button>
-  //  </form>
 });
 app.post('/urls/:shortURL/delete', (req, res) => {
   const urlDeleted = req.params.shortURL;
@@ -77,7 +134,8 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.redirect("/urls");
 });
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user };
   res.render("urls_show", templateVars);
 });
 app.get("/u/:shortURL", (req, res) => {
