@@ -149,8 +149,11 @@ app.post('/urls/:shortURL', (req, res) => {
 });
 app.post('/urls/:shortURL/delete', (req, res) => {
   const urlDeleted = req.params.shortURL;
-  delete urlDatabase[urlDeleted];
-  res.redirect("/urls");
+  if(req.cookies["user_id"] === urlDatabase[urlDeleted].userID){
+    delete urlDatabase[urlDeleted];
+    return res.redirect("/urls");
+  }
+  return res.send("Don\'t you dare!");
 });
 app.get("/urls/:shortURL", (req, res) => {
   const user = users[req.cookies["user_id"]];
