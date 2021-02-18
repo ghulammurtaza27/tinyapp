@@ -1,9 +1,12 @@
 const express = require("express");
+const morgan = require('morgan');
 const app = express();
+const bcrypt = require('bcrypt');
 const PORT = 8080; // default port 8080
 
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser())
 
@@ -78,12 +81,13 @@ app.post("/urls", (req, res) => {
 app.post("/login", (req, res) => {
   console.log(req.body.email);  // Log the POST request body to the console
   const { email, password } = req.body;
+  ;
 
   for (let user in users) {
     console.log(user);
     if (users[user].email === email) {
-        console.log(users[user].email);
-       if (users[user].password === password) {
+      console.log(users[user].email);
+      if (bcrypt.compareSync(password, users[user].password)) {
         res.cookie('user_id', user);
         return res.redirect('/login');
       }
@@ -121,6 +125,7 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) =>  {
   const { email, password } = req.body;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   if (email === "") {
     return res.status(400).send("Email cannot be empty");
   }
@@ -133,13 +138,17 @@ app.post("/register", (req, res) =>  {
   const userObj = {
     userId,
     email,
-    password, 
+    password: hashedPassword, 
   }
   users[userId] = userObj;
   res.cookie('user_id', userId);
   console.log(users);
   res.redirect("/urls");
 });
+
+app.get('*', (req, res) => {
+  res.redirect("urls");
+})
 
 
 app.post('/urls/:shortURL', (req, res) => {
