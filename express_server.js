@@ -45,7 +45,6 @@ app.listen(PORT, () => {
 // /urls/:shortURL
 app.get("/urls", (req, res) => {
   const user = users[req.session.user_id];
-  console.log(user);
   const templateVars = { urls: urlDatabase, user, userIDForm: req.session.user_id, };
   res.render("urls_index", templateVars);
 });
