@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require('bcrypt');
+const { getUserByEmail, generateRandomString, passwordMatches } = require('./helpers');
 
 const bodyParser = require("body-parser");
 //const cookieParser = require('cookie-parser')
@@ -17,10 +18,6 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
 
-
-
-
-
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "user2RandomID" },
   "9sm5xK": { longURL: "http://www.google.com", userID: "user2RandomID" }
@@ -30,12 +27,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", 10)
   }
 };
 
@@ -44,12 +41,6 @@ app.set('view engine', 'ejs');
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-
-
-
-
-
 
 // /urls/:shortURL
 app.get("/urls", (req, res) => {
@@ -69,13 +60,6 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-
-
-function generateRandomString() {
-  let r = Math.random().toString(36).substring(7);
-  return r;
-}
-
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   const shortURL = generateRandomString();
@@ -92,12 +76,11 @@ app.post("/login", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   const { email, password } = req.body;
   console.log(password);
-
+  
   for (let user in users) {
-    console.log(user);
-    if (users[user].email === email) {
-      console.log(users[user].email);
-      if (bcrypt.compareSync(password, users[user].password)) {
+    if (getUserByEmail(email, users)) {
+      console.log(users[user]);
+      if (passwordMatches(password, users[user])) {
         req.session.user_id = user;
         return res.redirect('/login');
       }
@@ -114,10 +97,8 @@ app.get("/login", (req, res) => {
   
 });
 
-
-
 app.post("/logout", (req, res) => {
-  req.session.user_id = null;
+  req.session = null;
   console.log("logout attempted")
   res.redirect("/urls");
 });
@@ -139,10 +120,8 @@ app.post("/register", (req, res) =>  {
   if (email === "") {
     return res.status(400).send("Email cannot be empty");
   }
-  for (let user in users) {
-    if (users[user].email === email) {
-       return res.status(400).send("This email already exists");
-    }
+  if (getUserByEmail(email, users)) {
+    return res.status(400).send("This email already exists");
   }
   const userId = generateRandomString();
   const userObj = {
@@ -179,6 +158,3 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
-
-
-
