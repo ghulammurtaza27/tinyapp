@@ -1,14 +1,23 @@
 const express = require("express");
-const morgan = require('morgan');
 const app = express();
-const bcrypt = require('bcrypt');
 const PORT = 8080; // default port 8080
+const bcrypt = require('bcrypt');
 
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
-app.use(morgan('dev'));
+//const cookieParser = require('cookie-parser')
+const cookieSession = require('cookie-session')
+
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser())
+//app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['Key1'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
+
 
 
 
@@ -79,9 +88,9 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log(req.body.email);  // Log the POST request body to the console
+  console.log(req.body);  // Log the POST request body to the console
   const { email, password } = req.body;
-  ;
+  console.log(password);
 
   for (let user in users) {
     console.log(user);
@@ -125,7 +134,7 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) =>  {
   const { email, password } = req.body;
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const hash = bcrypt.hashSync(password, 10);
   if (email === "") {
     return res.status(400).send("Email cannot be empty");
   }
@@ -138,17 +147,13 @@ app.post("/register", (req, res) =>  {
   const userObj = {
     userId,
     email,
-    password: hashedPassword, 
+    password: hash, 
   }
   users[userId] = userObj;
   res.cookie('user_id', userId);
   console.log(users);
   res.redirect("/urls");
 });
-
-app.get('*', (req, res) => {
-  res.redirect("urls");
-})
 
 
 app.post('/urls/:shortURL', (req, res) => {
@@ -162,7 +167,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
     delete urlDatabase[urlDeleted];
     return res.redirect("/urls");
   }
-  return res.send("Don\'t you dare!");
+  return res.send("Don\'t you dare");
 });
 app.get("/urls/:shortURL", (req, res) => {
   const user = users[req.cookies["user_id"]];
