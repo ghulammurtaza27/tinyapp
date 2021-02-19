@@ -38,9 +38,6 @@ const users = {
 
 app.set('view engine', 'ejs');
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 app.get("/", (req, res) => {
   if (req.session.user_id) {
@@ -49,7 +46,7 @@ app.get("/", (req, res) => {
   return res.redirect('/login');
 });
 
-// /urls/:shortURL
+
 app.get("/urls", (req, res) => {
   const user = users[req.session.user_id];
   const templateVars = { urls: urlDatabase, user, userIDForm: req.session.user_id, };
@@ -67,25 +64,20 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
   const shortURL = generateRandomString();
  
   const userId = req.session.user_id;
   urlDatabase[shortURL] = {};
   urlDatabase[shortURL].longURL = req.body.longURL;
   urlDatabase[shortURL].userID = userId;
-  console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);        // Respond with 'Ok' (we will replace this)
 });
 
 app.post("/login", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
   const { email, password } = req.body;
-  console.log(password);
   
   for (let user in users) {
     if (getUserByEmail(email, users)) {
-      console.log(users[user]);
       if (passwordMatches(password, users[user])) {
         req.session.user_id = user;
         return res.redirect('/login');
@@ -98,21 +90,18 @@ app.post("/login", (req, res) => {
 app.get("/login", (req, res) => {
   const user = users[req.session.user_id];
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user };
-  console.log("loginpage hit");
   res.render("login", templateVars);
   
 });
 
 app.post("/logout", (req, res) => {
   req.session = null;
-  console.log("logout attempted")
   res.redirect("/urls");
 });
 
 app.get("/register", (req, res) => {
   const user = users[req.session.user_id];
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user };
-  console.log("register page hit");
   res.render("register", templateVars);
   
 });
@@ -137,7 +126,6 @@ app.post("/register", (req, res) =>  {
   }
   users[userId] = userObj;
   req.session.user_id = userId;
-  console.log(users);
   res.redirect("/urls");
 });
 
@@ -176,4 +164,11 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
+});
+
+
+//APP.LISTEN REQUEST
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
