@@ -42,6 +42,13 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+app.get("/", (req, res) => {
+  if (req.session.user_id) {
+    return res.redirect('/urls');
+  }
+  return res.redirect('/login');
+});
+
 // /urls/:shortURL
 app.get("/urls", (req, res) => {
   const user = users[req.session.user_id];
@@ -136,9 +143,14 @@ app.post("/register", (req, res) =>  {
 
 
 app.post('/urls/:shortURL', (req, res) => {
-  const shortURL = req.params.shortURL;
-  urlDatabase[shortURL].longURL = req.body.longURL;
-  res.redirect(`/urls`);
+  if (users[req.session.user_id]) {
+    const shortURL = req.params.shortURL;
+    urlDatabase[shortURL].longURL = req.body.longURL;
+    return res.redirect(`/urls`);
+  } else {
+    res.status(405).send("Permission denied.");
+  }
+  
 });
 app.post('/urls/:shortURL/delete', (req, res) => {
   const urlDeleted = req.params.shortURL;
@@ -149,9 +161,17 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   return res.send("Don\'t you dare");
 });
 app.get("/urls/:shortURL", (req, res) => {
-  const user = users[req.session.user_id];
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user };
-  res.render("urls_show", templateVars);
+  if (req.session.isNew) {
+    return res.redirect("/login");
+  }
+  else if (urlDatabase[req.params.shortURL] && urlDatabase[req.params.shortURL].userID === req.session.user_id) {
+    const user = users[req.session.user_id];
+    const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user };
+    return res.render("urls_show", templateVars);
+  }
+  else {
+    return res.status(404).send('Requested resource could not be located.');
+  }
 });
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
