@@ -64,6 +64,9 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
+  if (!req.session) {
+    return res.status(405).send("You cannot generate URLs if you're not logged in.")
+  }
   const shortURL = generateRandomString();
  
   const userId = req.session.user_id;
@@ -80,7 +83,7 @@ app.post("/login", (req, res) => {
     if (getUserByEmail(email, users)) {
       if (passwordMatches(password, users[user])) {
         req.session.user_id = user;
-        return res.redirect('/login');
+        return res.redirect('/urls');
       }
     }
   }
@@ -150,7 +153,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 });
 app.get("/urls/:shortURL", (req, res) => {
   if (req.session.isNew) {
-    return res.redirect("/login");
+    return res.status(404).send('Please log in to access your requested short URL.');
   }
   else if (urlDatabase[req.params.shortURL] && urlDatabase[req.params.shortURL].userID === req.session.user_id) {
     const user = users[req.session.user_id];
@@ -158,7 +161,7 @@ app.get("/urls/:shortURL", (req, res) => {
     return res.render("urls_show", templateVars);
   }
   else {
-    return res.status(404).send('Requested resource could not be located.');
+    return res.status(404).send('Requested resource belongs to another user.');
   }
 });
 app.get("/u/:shortURL", (req, res) => {
